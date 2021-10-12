@@ -33,6 +33,11 @@ class CampaignItem extends Model
         return $this->hasOne(User::class, 'id', 'user_id');
     }
 
+    public function contacts()
+    {
+        return $this->hasMany(ContactCampaignItem::class, 'campaign_item_id', 'id');
+    }
+
     public function getFullNameAttribute()
     {
         return
@@ -41,9 +46,5 @@ class CampaignItem extends Model
             " (" . self::STATUSES[$this->status] . ")";
     }
 
-    public function getStatusNameAttribute()
-    {
-        return self::STATUSES[$this->status];
-    }
 
 }
