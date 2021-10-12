@@ -144,7 +144,7 @@ class EmailProcessController extends Controller
         ]);
 
         $result = $guzzleClient->request('GET',
-            'messages?limit=10000&query=msg_id+LIKE+"' . $campaignItem . '%"',
+            'messages?limit=10000&query=msg_id+LIKE+"' . $campaignItem->external_service_id . '%"',
             [
                 RequestOptions::HEADERS => [
                     'Authorization' => 'Bearer ' . env('SG_TOKEN')
