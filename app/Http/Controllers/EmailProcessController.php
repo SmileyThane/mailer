@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\CampaignItem;
 use App\Models\Template;
+use GuzzleHttp\Client;
+use GuzzleHttp\RequestOptions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -28,38 +30,81 @@ class EmailProcessController extends Controller
             ['status', '!=', 4]
         ])->get();
 
+        $campaignIds = [];
+
         foreach ($campaignItems as $campaignItem) {
             $campaignItem->status = 2;
             $campaignItem->campaign->status = 2;
+            $recipientsArray = [];
 
-//            Log::info('processed: ' . $campaignItem->id);
-            foreach ($campaignItem->campaign->contacts as $contactItem) {
-                try {
-                    $campaignItem->template->data = $this->parse($campaignItem->template->data, $campaignItem->campaign->user, $contactItem->contact);
-                    Mail::send('mail.invite', ['content' => $campaignItem->template->data], function ($message) use ($contactItem, $campaignItem) {
-                        $message->to($contactItem->contact->email)->subject($campaignItem->template->name);
-                    });
-
-                } catch (\Throwable $throwable) {
-                    $campaignItem->status = 4;
-                    $campaignItem->campaign->status = 4;
-                    Log::error($throwable->getMessage());
-                    $campaignItem->status_log .= "\n" . $throwable;
+            if ($campaignItem->campaign->contacts) {
+                $contactArray = $campaignItem->campaign->contacts->pluck('contact');
+                foreach ($contactArray as $contactItem) {
+                    try {
+                        $recipientsArray[] = ['email' => $contactItem->email, 'name' => $contactItem->name];
+                        $campaignIds[] = $campaignItem->campaign_id;
+                    } catch (\Throwable $throwable) {
+                        $campaignItem->status = 4;
+                        $campaignItem->campaign->status = 4;
+                        Log::error($throwable->getMessage());
+                        $campaignItem->status_log .= "\n" . $throwable;
+                    }
                 }
+
+                $campaignItem->template->data = $this->parse($campaignItem->template->data, $campaignItem->campaign->user, $contactItem);
+
+                $this->send($campaignItem->user, $recipientsArray, $campaignItem->template->name, $campaignItem->template->data);
             }
+
             $campaignItem->campaign->save();
             $campaignItem->save();
         }
 
-        $campaigns = Campaign::query()->where('status', '!=', 1)->get();
+        $campaigns = Campaign::query()->whereIn('id', array_unique($campaignIds))->get();
 
         foreach ($campaigns as $campaign) {
-            if ($campaign->campaignItems()->where('status', '=',1)->where('status', '!=', 4)->count() === 0) {
+            if ($campaign->campaignItems()->where('status', '=', 1)->where('status', '!=', 4)->count() === 0) {
                 $campaign->finished_at = now();
                 $campaign->status = 3;
                 $campaign->save();
             }
         }
+    }
+
+    private function send($from, $to, $subject, $body)
+    {
+        $guzzleClient = new Client([
+            'base_uri' => env('SG_URL'),
+        ]);
+
+        $result = $guzzleClient->request('POST', 'mail/send', [
+            RequestOptions::HEADERS => [
+                'Authorization' => 'Bearer ' . env('SG_TOKEN')
+            ],
+            RequestOptions::JSON => [
+                "personalizations" => [
+                    [
+                        "to" => $to,
+                        "subject" => $subject
+                    ]
+                ],
+                "content" => [
+                    [
+                        "type" => "text/html",
+                        "value" => $body
+                    ]
+                ],
+                "from" => [
+                    "email" => $from->email,
+                    "name" => $from->full_name
+                ],
+                "reply_to" => [
+                    "email" => $from->email,
+                    "name" => $from->full_name
+                ]
+            ],
+        ]);
+        $result->getHeader('X-Message-Id');
     }
 
 }
