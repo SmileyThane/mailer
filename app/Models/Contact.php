@@ -22,6 +22,11 @@ class Contact extends Model
         return $this->hasOne(User::class, 'id', 'user_id');
     }
 
+    public function contacts()
+    {
+        return $this->hasMany(ContactCampaignItem::class, 'contact_id', 'id');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->name . ' ' . $this->lastname;
