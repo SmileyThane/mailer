@@ -53,6 +53,22 @@ class ContactCrudController extends CrudController
          */
     }
 
+    protected function setupShowOperation()
+    {
+        CRUD::column('id');
+        CRUD::column('email');
+        CRUD::column('name');
+        CRUD::column('lastname');
+        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'contact_plus_status']);
+        CRUD::column('updated_at');
+
+        /**
+         * Columns can be defined using the fluent syntax or array syntax:
+         * - CRUD::column('price')->type('number');
+         * - CRUD::addColumn(['name' => 'price', 'type' => 'number']);
+         */
+    }
+
     /**
      * Define what happens when the Create operation is loaded.
      *
