@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\CampaignItem;
-use App\Models\Template;
+use App\Models\Contact;
+use App\Models\ContactCampaignItem;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
+use mysql_xdevapi\Exception;
 
 class EmailProcessController extends Controller
 {
@@ -50,6 +50,12 @@ class EmailProcessController extends Controller
                     try {
                         $recipientsArray[] = ['email' => $contactItem->email, 'name' => $contactItem->name];
                         $campaignIds[] = $campaignItem->campaign_id;
+
+                        ContactCampaignItem::query()->create([
+                            'campaign_item_id' => $campaignItem->id,
+                            'contact_id' => $contactItem->id,
+
+                        ]);
                     } catch (\Throwable $throwable) {
                         $campaignItem->status = 4;
                         $campaignItem->campaign->status = 4;
@@ -58,9 +64,8 @@ class EmailProcessController extends Controller
                     }
                 }
 
-                $campaignItem->template->data = $this->parse($campaignItem->template->data, $campaignItem->campaign->user, $contactItem);
-
-                $this->send($campaignItem->user, $recipientsArray, $campaignItem->template->name, $campaignItem->template->data);
+                $externalToken = $this->sendGridTransfer($campaignItem->user, $recipientsArray, $campaignItem->template->name, $campaignItem->template->data);
+                $campaignItem->external_service_id = $externalToken;
             }
 
             $campaignItem->campaign->save();
@@ -80,7 +85,7 @@ class EmailProcessController extends Controller
         }
     }
 
-    private function send($from, $to, $subject, $body)
+    private function sendGridTransfer($from, $to, $subject, $body)
     {
         $guzzleClient = new Client([
             'base_uri' => env('SG_URL'),
@@ -113,7 +118,59 @@ class EmailProcessController extends Controller
                 ]
             ],
         ]);
-        echo $result->getHeader('X-Message-Id');
+        if ($result->getHeader('X-Message-Id')) {
+            return $result->getHeader('X-Message-Id')[0];
+        } else {
+            throw new Exception('Sending error');
+        }
+
     }
+
+    public function checkSendGridTransferStatus()
+    {
+        $campaignItems = CampaignItem::query()
+            ->where('external_service_id', '!=', null)
+            ->where('is_responded_from_external_service', false)->get();
+
+        foreach ($campaignItems as $campaignItem) {
+            $this->getSendGridTransferStatus($campaignItem);
+        }
+    }
+
+    public function getSendGridTransferStatus($campaignItem)
+    {
+        $guzzleClient = new Client([
+            'base_uri' => env('SG_URL'),
+        ]);
+
+        $result = $guzzleClient->request('GET',
+            'messages?limit=10000&query=msg_id+LIKE+"' . $campaignItem . '%"',
+            [
+                RequestOptions::HEADERS => [
+                    'Authorization' => 'Bearer ' . env('SG_TOKEN')
+                ]
+            ]);
+        try {
+            $messages = json_decode($result->getBody()->getContents())->messages;
+            if ($messages !== []) {
+                foreach ($messages as $message) {
+                    $contact = Contact::query()->where('email', $message->to_email)->first();
+                    $contactCampaignItem = ContactCampaignItem::query()
+                        ->where('campaign_item_id', $campaignItem->id)
+                        ->where('contact_id', $contact->id)->first();
+                    $contactCampaignItem->update([
+                        'external_service_id' => $message->msg_id,
+                        'external_service_status' => $message->msg_id,
+                    ]);
+                }
+                $campaignItem->status_log = json_encode($messages);
+                $campaignItem->is_responded_from_external_service = true;
+                $campaignItem->save();
+            }
+        } catch (\Throwable $throwable) {
+            Log::error($throwable);
+        }
+    }
+
 
 }
