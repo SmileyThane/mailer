@@ -30,8 +30,15 @@ class EmailProcessController extends Controller
             ['status', '!=', 4]
         ])->get();
 
-        $campaignIds = [];
+        $campaignIds = $this->handleCampaignItems($campaignItems);
 
+        $campaigns = Campaign::query()->whereIn('id', array_unique($campaignIds))->get();
+        $this->updateCampaignStatus($campaigns);
+    }
+
+    private function handleCampaignItems($campaignItems)
+    {
+        $campaignIds = [];
         foreach ($campaignItems as $campaignItem) {
             $campaignItem->status = 2;
             $campaignItem->campaign->status = 2;
@@ -59,9 +66,11 @@ class EmailProcessController extends Controller
             $campaignItem->campaign->save();
             $campaignItem->save();
         }
+        return $campaignIds;
+    }
 
-        $campaigns = Campaign::query()->whereIn('id', array_unique($campaignIds))->get();
-
+    private function updateCampaignStatus($campaigns)
+    {
         foreach ($campaigns as $campaign) {
             if ($campaign->campaignItems()->where('status', '=', 1)->where('status', '!=', 4)->count() === 0) {
                 $campaign->finished_at = now();
@@ -104,7 +113,7 @@ class EmailProcessController extends Controller
                 ]
             ],
         ]);
-        $result->getHeader('X-Message-Id');
+        echo $result->getHeader('X-Message-Id');
     }
 
 }
