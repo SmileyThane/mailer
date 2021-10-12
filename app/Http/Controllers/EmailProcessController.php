@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\CampaignItem;
 use App\Models\Contact;
 use App\Models\ContactCampaignItem;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
@@ -160,11 +161,13 @@ class EmailProcessController extends Controller
                         ->where('contact_id', $contact->id)->first();
                     $contactCampaignItem->update([
                         'external_service_id' => $message->msg_id,
-                        'external_service_status' => $message->msg_id,
+                        'external_service_status' => $message->status,
                     ]);
                 }
                 $campaignItem->status_log = json_encode($messages);
-                $campaignItem->is_responded_from_external_service = true;
+                if (Carbon::parse($campaignItem->processed_at)->diffInDays(now()) > 1) {
+                    $campaignItem->is_responded_from_external_service = true;
+                }
                 $campaignItem->save();
             }
         } catch (\Throwable $throwable) {
