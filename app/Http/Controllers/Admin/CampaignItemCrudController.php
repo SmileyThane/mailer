@@ -69,6 +69,7 @@ class CampaignItemCrudController extends CrudController
         CRUD::column('id');
         CRUD::addColumn(['name' => 'campaign', 'type' => 'relationship', 'label' => 'Campaign']);
         CRUD::addColumn(['name' => 'template', 'type' => 'relationship', 'label' => 'Template']);
+        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'campaign_item_plus_status']);
         CRUD::column('status');
         CRUD::column('created_at');
         CRUD::column('processed_at');
