@@ -15,6 +15,7 @@ Route::group([
     'namespace'  => 'App\Http\Controllers\Admin',
 ], function () { // custom admin routes
     Route::crud('contact', 'ContactCrudController');
+    Route::crud('contact-group', 'ContactGroupCrudController');
     Route::crud('campaign', 'CampaignCrudController');
     Route::crud('campaign-item', 'CampaignItemCrudController');
     Route::crud('template', 'TemplateCrudController');
