@@ -10,7 +10,7 @@ class Template extends Model
     use \Backpack\CRUD\app\Models\Traits\CrudTrait;
     use HasFactory;
 
-    protected $fillable = ['name', 'data', 'user_id'];
+    protected $fillable = ['name', 'data', 'user_id', 'subject'];
 
     protected $hidden = ['user_id'];
 
