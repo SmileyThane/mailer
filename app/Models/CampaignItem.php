@@ -14,7 +14,7 @@ class CampaignItem extends Model
 
     const STATUSES = [ 1 => 'waiting', 2 => 'pushed', 3 => 'on hold', 4 => 'failed'];
 
-    protected $fillable = ['campaign_id', 'user_id', 'template_id', 'processed_at'];
+    protected $fillable = ['campaign_id', 'user_id', 'template_id', 'processed_at', 'status_log'];
 
     protected $appends = ['status_name', 'full_name'];
 
@@ -45,6 +45,11 @@ class CampaignItem extends Model
             $this->template->name . " at ".
             Carbon::parse($this->processed_at)->format('d-m-Y') .
             " (" . self::STATUSES[$this->status] . ")";
+    }
+
+    public function getStatusLogAttribute($value)
+    {
+        return json_decode(stripslashes($value), true);
     }
 
 
