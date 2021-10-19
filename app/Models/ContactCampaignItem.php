@@ -13,7 +13,7 @@ class ContactCampaignItem extends Model
 
     protected $appends = ['contact_plus_status', 'campaign_item_plus_status'];
 
-    public function campignItem()
+    public function campaignItem()
     {
         return $this->hasOne(CampaignItem::class, 'id', 'campaign_item_id');
     }
@@ -30,6 +30,6 @@ class ContactCampaignItem extends Model
 
     public function getCampaignItemPlusStatusAttribute()
     {
-        return $this->campignItem->name . '[' . ($this->external_service_status ?? 'none') . ']';
+        return $this->campaignItem->campaign->name . '[' . ($this->external_service_status ?? 'none') . ']';
     }
 }
