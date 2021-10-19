@@ -29,7 +29,7 @@ class TemplateCrudController extends CrudController
     {
         CRUD::setModel(\App\Models\Template::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/template');
-        CRUD::setEntityNameStrings('template', 'templates');
+        CRUD::setEntityNameStrings('Email Template', 'Email templates');
     }
 
     /**
@@ -60,6 +60,7 @@ class TemplateCrudController extends CrudController
     {
         CRUD::column('id');
         CRUD::column('name');
+        CRUD::column('subject');
     }
 
     /**
@@ -73,6 +74,7 @@ class TemplateCrudController extends CrudController
         CRUD::setValidation(TemplateRequest::class);
 
         CRUD::field('name');
+        CRUD::field('subject');
         CRUD::addField([
             'name'  => 'data',
             'type'  => 'tinymce',
