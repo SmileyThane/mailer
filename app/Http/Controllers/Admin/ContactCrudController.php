@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ContactRequest;
+use App\Models\ContactGroup;
+use App\Models\Template;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Support\Facades\Auth;
@@ -42,10 +44,10 @@ class ContactCrudController extends CrudController
     {
         CRUD::column('id');
         CRUD::column('email');
+        CRUD::addColumn(['name' => 'contactGroup', 'type' => 'relationship', 'label' => 'Group', 'attribute' => 'name']);
         CRUD::column('name');
         CRUD::column('lastname');
         CRUD::column('updated_at');
-
         /**
          * Columns can be defined using the fluent syntax or array syntax:
          * - CRUD::column('price')->type('number');
@@ -57,9 +59,9 @@ class ContactCrudController extends CrudController
     {
         CRUD::column('id');
         CRUD::column('email');
+        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'campaign_item_plus_status']);
         CRUD::column('name');
         CRUD::column('lastname');
-        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'contact_plus_status']);
         CRUD::column('updated_at');
 
         /**
@@ -80,8 +82,15 @@ class ContactCrudController extends CrudController
         CRUD::setValidation(ContactRequest::class);
 
         CRUD::field('email');
-        CRUD::field('lastname');
+        CRUD::addField([
+            'name'  => 'group_id',
+            'label' => "Group",
+            'type'  => 'select2_from_array',
+            'options' => ContactGroup::query()->where('user_id', backpack_user()->id)->get()->pluck('name', 'id')->toArray()
+
+        ]);
         CRUD::field('name');
+        CRUD::field('lastname');
         CRUD::addField([
             'name'  => 'user_id',
             'type'  => 'hidden',
