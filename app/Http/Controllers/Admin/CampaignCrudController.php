@@ -6,6 +6,7 @@ use App\Http\Requests\CampaignRequest;
 use App\Models\Campaign;
 use App\Models\CampaignContact;
 use App\Models\Contact;
+use App\Models\ContactGroup;
 use App\Models\User;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
@@ -20,7 +21,9 @@ use Illuminate\Support\Facades\Auth;
 class CampaignCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation { store as traitStore; }
+    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+        store as traitStore;
+    }
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
@@ -64,12 +67,26 @@ class CampaignCrudController extends CrudController
     {
         CRUD::column('id');
         CRUD::column('name');
-        CRUD::addColumn(['name' => 'campaignItems', 'type' => 'relationship', 'label' => 'Items', 'attribute' => 'full_name']);
-        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Contacts', 'attribute' => 'contact.email']);
         CRUD::column('status');
         CRUD::column('created_at');
         CRUD::column('started_at');
         CRUD::column('finished_at');
+        CRUD::addColumn(
+            [
+                'name'  => 'campaign_items',
+                'label' => 'Campaign Sequence', // Table column heading
+                'type'  => 'model_function',
+                'function_name' => 'linksToCampaignItems', // the method in your Model
+            ],
+        );
+        CRUD::addColumn(
+            [
+                'name'  => 'contacts',
+                'label' => 'Contacts', // Table column heading
+                'type'  => 'model_function',
+                'function_name' => 'linksToContacts', // the method in your Model
+            ],
+        );
     }
 
     /**
@@ -85,22 +102,31 @@ class CampaignCrudController extends CrudController
         CRUD::field('name');
         CRUD::field('started_at');
         CRUD::addField([
-            'name'  => 'user_id',
-            'type'  => 'hidden',
+            'name' => 'user_id',
+            'type' => 'hidden',
             'value' => backpack_user()->id,
         ]);
 
         CRUD::addField([
-            'name'  => 'status',
+            'name' => 'status',
             'label' => "Status",
-            'type'  => 'select2_from_array',
+            'type' => 'select2_from_array',
             'options' => Campaign::STATUSES
         ]);
 
         CRUD::addField([
-            'name'  => 'contacts',
+            'name' => 'contacts',
             'label' => "Contacts (comma separated)",
-            'type'  => 'text'
+            'type' => 'text'
+        ]);
+
+        CRUD::addField([
+            'name' => 'contact_groups',
+            'label' => "Contact groups (multiple)",
+            'type' => 'select2_multiple',
+            'model' => ContactGroup::class,
+            'attribute' => 'name',
+
         ]);
 
         /**
@@ -113,16 +139,23 @@ class CampaignCrudController extends CrudController
     public function store(Request $request)
     {
 
-        $contactIds = $this->storeContactProcess($request->contacts);
+        $contactGroups = ContactGroup::query()->whereIn('id', $request->contact_groups)->get();
+        $contactIds = array_unique(
+            array_merge(
+                $this->storeContactProcess($request->contacts),
+                $contactGroups ? $contactGroups->pluck('id')->toArray() : []
+            )
+        );
+
         $response = $this->traitStore();
         $id = $this->crud->entry->id;
 
         foreach ($contactIds as $contactId) {
             CampaignContact::query()->create([
-                    'user_id' => backpack_user()->id,
+                'user_id' => backpack_user()->id,
                 'campaign_id' => $id,
                 'contact_id' => $contactId
-                ]);
+            ]);
         }
 
         return $response;
@@ -132,7 +165,7 @@ class CampaignCrudController extends CrudController
     {
         $contactIds = [];
         if (strlen($contacts) > 0) {
-            foreach (explode(',' , $contacts) as $contact) {
+            foreach (explode(',', $contacts) as $contact) {
                 $contact = Contact::query()->firstOrCreate(
                     ['email' => trim($contact)],
                     ['name' => trim(explode('@', $contact)[0]), 'user_id' => backpack_user()->id]
