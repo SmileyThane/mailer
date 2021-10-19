@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\Auth;
 class CampaignItemCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation { store as traitStore; }
+    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+        store as traitStore;
+    }
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
@@ -34,7 +36,7 @@ class CampaignItemCrudController extends CrudController
     {
         CRUD::setModel(\App\Models\CampaignItem::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/campaign-item');
-        CRUD::setEntityNameStrings('campaign item', 'campaign items');
+        CRUD::setEntityNameStrings('Campaign Sequence', 'Campaign Sequences');
     }
 
     /**
@@ -69,12 +71,24 @@ class CampaignItemCrudController extends CrudController
         CRUD::column('id');
         CRUD::addColumn(['name' => 'campaign', 'type' => 'relationship', 'label' => 'Campaign']);
         CRUD::addColumn(['name' => 'template', 'type' => 'relationship', 'label' => 'Template']);
-        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'campaign_item_plus_status']);
+//        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'campaign_item_plus_status']);
         CRUD::column('status');
         CRUD::column('created_at');
         CRUD::column('processed_at');
-        CRUD::column('status_log');
-
+        CRUD::addColumn(
+            [
+                'name' => 'status_log',
+                'label' => 'Status log',
+                'type' => 'table',
+                'columns' => [
+                    'from_email' => 'From',
+                    'to_email' => 'To',
+                    'status' => 'Status',
+                    'opens_count' => 'Opens count',
+                    'clicks_count' => 'Clicks count'
+                ]
+            ]
+        );
     }
 
     /**
@@ -88,26 +102,26 @@ class CampaignItemCrudController extends CrudController
         CRUD::setValidation(CampaignItemRequest::class);
 
         CRUD::addField([
-            'label'     => "Campaign",
-            'type'      => 'select_from_array',
-            'name'      => 'campaign_id',
-            'options'   => Campaign::query()->where('user_id', backpack_user()->id)->get()->pluck('name','id')->toArray()
+            'label' => "Campaign",
+            'type' => 'select_from_array',
+            'name' => 'campaign_id',
+            'options' => Campaign::query()->where('user_id', backpack_user()->id)->get()->pluck('name', 'id')->toArray()
         ]);
         CRUD::addField([
-            'label'     => "Template",
-            'type'      => 'select_from_array',
-            'name'      => 'template_id', // the db column for the foreign key
-            'options'   => Template::query()->where('user_id', backpack_user()->id)->get()->pluck('name','id')->toArray()
+            'label' => "Template",
+            'type' => 'select_from_array',
+            'name' => 'template_id', // the db column for the foreign key
+            'options' => Template::query()->where('user_id', backpack_user()->id)->get()->pluck('name', 'id')->toArray()
         ]);
         CRUD::addField([
-            'name'  => 'user_id',
-            'type'  => 'hidden',
+            'name' => 'user_id',
+            'type' => 'hidden',
             'value' => backpack_user()->id,
         ]);
         CRUD::addField([
-            'label'     => "Process after (days)",
-            'name'  => 'processed_at',
-            'type'  => 'text',
+            'label' => "Process after (days)",
+            'name' => 'processed_at',
+            'type' => 'text',
         ]);
 
 
@@ -121,7 +135,7 @@ class CampaignItemCrudController extends CrudController
 
     public function store(Request $request)
     {
-        $previousCampaignItem = CampaignItem::query()->where('campaign_id', $request->campaign_id )->latest()->first();
+        $previousCampaignItem = CampaignItem::query()->where('campaign_id', $request->campaign_id)->latest()->first();
         $initialTime = $previousCampaignItem !== null ? $previousCampaignItem->processed_at :
             Campaign::query()->find($request->campaign_id)->started_at;
         $this->crud->getRequest()->request->add(
