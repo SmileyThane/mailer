@@ -65,7 +65,12 @@ class EmailProcessController extends Controller
                     }
                 }
 
-                $externalToken = $this->sendGridTransfer($campaignItem->user, $recipientsArray, $campaignItem->template->name, $campaignItem->template->data);
+                $externalToken = $this->sendGridTransfer(
+                    $campaignItem->user,
+                    $recipientsArray,
+                    $campaignItem->template->subject ?? $campaignItem->template->name,
+                    $campaignItem->template->data
+                );
                 $campaignItem->external_service_id = $externalToken;
             }
 
@@ -110,8 +115,8 @@ class EmailProcessController extends Controller
                     ]
                 ],
                 "from" => [
-                    "email" => $from->email,
-                    "name" => $from->full_name
+                    "email" => $from->sender_email ?? $from->email,
+                    "name" => $from->sender_name ?? $from->name
                 ],
                 "reply_to" => [
                     "email" => $from->email,
