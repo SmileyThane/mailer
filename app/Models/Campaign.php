@@ -5,11 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use function Sodium\increment;
 
 class Campaign extends Model
 {
     use \Backpack\CRUD\app\Models\Traits\CrudTrait;
     use HasFactory;
+
+    const CAMPAIGN_ITEM_ROUTE = 'campaign-item/';
+    const CONTACT_ROUTE = 'contact/';
 
     const STATUSES = [ 1 => 'pending', 2 => 'started', 3 => 'finished', 4 => 'failed'];
 
@@ -22,6 +26,32 @@ class Campaign extends Model
     public function campaignItems()
     {
         return $this->hasMany(CampaignItem::class, 'campaign_id', 'id' );
+    }
+
+    public function linksToCampaignItems()
+    {
+        $links = '';
+        $key = 1;
+        foreach ($this->campaignItems as $campaignItem) {
+
+            $links .= '<a href="'.backpack_url(self::CAMPAIGN_ITEM_ROUTE . $campaignItem->id . '/show' ).'">'.
+                $key . ') ' . $campaignItem->processed_at.'</a><br/>';
+            $key++;
+        }
+        return $links;
+    }
+
+    public function linksToContacts()
+    {
+        $links = '';
+        $key = 1;
+        foreach ($this->contacts as $contact) {
+
+            $links .= '<a href="'.backpack_url(self::CONTACT_ROUTE . $contact->id . '/show' ).'">'.
+                $key . ') ' . $contact->contact->email.'</a><br/>';
+            $key++;
+        }
+        return $links;
     }
 
     public function contacts(): HasMany
