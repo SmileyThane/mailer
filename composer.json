@@ -7,6 +7,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "backpack/crud": "4.1.*",
+        "backpack/filemanager": "^1.1",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",
@@ -14,6 +15,7 @@
         "laravel/framework": "^8.40",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.3",
+        "rap2hpoutre/fast-excel": "^3.1",
         "studio/laravel-totem": "^8.1"
     },
     "require-dev": {

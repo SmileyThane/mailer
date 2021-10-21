@@ -19,4 +19,6 @@ Route::group([
     Route::crud('campaign', 'CampaignCrudController');
     Route::crud('campaign-item', 'CampaignItemCrudController');
     Route::crud('template', 'TemplateCrudController');
+    Route::crud('company', 'CompanyCrudController');
+    Route::crud('import', 'ImportCrudController');
 }); // this should be the absolute last line of this file
