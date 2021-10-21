@@ -14,4 +14,9 @@ class ContactGroup extends Model
     protected $fillable = ['name', 'user_id'];
 
     protected $hidden = ['user_id'];
+
+    public function contacts()
+    {
+        return $this->hasMany(Contact::class, 'group_id', 'id');
+    }
 }
