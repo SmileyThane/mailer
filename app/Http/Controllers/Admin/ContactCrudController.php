@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ContactRequest;
+use App\Models\Company;
 use App\Models\ContactGroup;
 use App\Models\Template;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
@@ -45,6 +46,7 @@ class ContactCrudController extends CrudController
         CRUD::column('id');
         CRUD::column('email');
         CRUD::addColumn(['name' => 'contactGroup', 'type' => 'relationship', 'label' => 'Group', 'attribute' => 'name']);
+        CRUD::addColumn(['name' => 'companyItem', 'type' => 'relationship', 'label' => 'Company', 'attribute' => 'name']);
         CRUD::column('name');
         CRUD::column('lastname');
         CRUD::column('updated_at');
@@ -59,7 +61,9 @@ class ContactCrudController extends CrudController
     {
         CRUD::column('id');
         CRUD::column('email');
-        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for contacts', 'attribute' => 'campaign_item_plus_status']);
+        CRUD::addColumn(['name' => 'contactGroup', 'type' => 'relationship', 'label' => 'Group', 'attribute' => 'name']);
+        CRUD::addColumn(['name' => 'companyItem', 'type' => 'relationship', 'label' => 'Company', 'attribute' => 'name']);
+        CRUD::addColumn(['name' => 'contacts', 'type' => 'relationship', 'label' => 'Statues for items', 'attribute' => 'campaign_item_plus_status']);
         CRUD::column('name');
         CRUD::column('lastname');
         CRUD::column('updated_at');
@@ -91,6 +95,13 @@ class ContactCrudController extends CrudController
         ]);
         CRUD::field('name');
         CRUD::field('lastname');
+        CRUD::addField([
+            'name'  => 'company_id',
+            'label' => "Company",
+            'type'  => 'select2_from_array',
+            'options' => Company::query()->get()->pluck('name', 'id')->toArray()
+
+        ]);
         CRUD::addField([
             'name'  => 'user_id',
             'type'  => 'hidden',
