@@ -85,6 +85,7 @@ class CampaignCrudController extends CrudController
                 'label' => 'Contacts', // Table column heading
                 'type'  => 'model_function',
                 'function_name' => 'linksToContacts', // the method in your Model
+                 'limit' => -1,
             ],
         );
     }
@@ -140,12 +141,22 @@ class CampaignCrudController extends CrudController
     {
 
         $contactGroups = ContactGroup::query()->whereIn('id', $request->contact_groups)->get();
+        $contactGroupsItemIds = [];
+        if ($contactGroups) {
+            $contactGroupsIds = $contactGroups->pluck('id')->toArray();
+            $contactGroupsItems = Contact::query()->whereIn('group_id', $contactGroupsIds)->get();
+            if ($contactGroupsItems) {
+                $contactGroupsItemIds = $contactGroupsItems->pluck('id')->toArray();
+            }
+        }
+
         $contactIds = array_unique(
             array_merge(
                 $this->storeContactProcess($request->contacts),
-                $contactGroups ? $contactGroups->pluck('id')->toArray() : []
+                $contactGroupsItemIds
             )
         );
+
 
         $response = $this->traitStore();
         $id = $this->crud->entry->id;
