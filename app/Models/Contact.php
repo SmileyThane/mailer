@@ -11,15 +11,20 @@ class Contact extends Model
     use CrudTrait;
     use HasFactory;
 
-    protected $fillable = ['email', 'name', 'lastname', 'user_id', 'group_id'];
+    protected $fillable = ['email', 'name', 'lastname', 'user_id', 'group_id', 'job_title', 'internal_ref', 'company_id'];
 
-    protected $hidden = ['user_id'];
+    protected $hidden = ['user_id', 'group_id', 'company_id'];
 
     protected $appends = ['full_name'];
 
     public function user()
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function companyItem()
+    {
+        return $this->hasOne(Company::class, 'id', 'company_id');
     }
 
     public function contactGroup()

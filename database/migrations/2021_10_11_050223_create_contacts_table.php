@@ -17,9 +17,12 @@ class CreateContactsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('lastname')->nullable();
+            $table->string('job_title')->nullable();
             $table->string('email');
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('group_id');
+            $table->unsignedBigInteger('group_id')->nullable();
+            $table->unsignedBigInteger('company_id')->nullable();
+            $table->string('internal_ref')->nullable();
             $table->timestamps();
         });
     }
