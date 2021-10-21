@@ -5,3 +5,7 @@
 <li class='nav-item'><a class='nav-link' href='{{ backpack_url('contact-group') }}'><i class='nav-icon la la-users-cog'></i> Contact groups</a></li>
 <li class='nav-item'><a class='nav-link' href='{{ backpack_url('campaign') }}'><i class='nav-icon la la-business-time'></i> Campaigns</a></li>
 <li class='nav-item'><a class='nav-link' href='{{ backpack_url('campaign-item') }}'><i class='nav-icon la la-address-book-o'></i> Campaign Sequence</a></li>
+
+<li class='nav-item'><a class='nav-link' href='{{ backpack_url('company') }}'><i class='nav-icon la la-question'></i> Companies</a></li>
+<li class='nav-item'><a class='nav-link' href='{{ backpack_url('import') }}'><i class='nav-icon la la-question'></i> Imports</a></li>
+<li class="nav-item"><a class="nav-link" href="{{ backpack_url('elfinder') }}"><i class="nav-icon la la-files-o"></i> <span>{{ trans('backpack::crud.file_manager') }}</span></a></li>
