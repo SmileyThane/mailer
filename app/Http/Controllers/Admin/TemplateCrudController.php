@@ -20,7 +20,9 @@ class TemplateCrudController extends CrudController
     use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
       store as traitStore;
     }
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation{
+      update as traitUpdate;
+    }
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
 
@@ -98,12 +100,19 @@ class TemplateCrudController extends CrudController
 
   public function store(Request $request): RedirectResponse
   {
-    $request['data'] =  str_replace('src="',
-                                    'src="' . env('APP_URL'),
-                                            $request['data']
-    );
-
+    $request['data'] =  $this->modifyTemplateContentLinks($request['data']);
     return $this->traitStore();
+  }
+
+  public function update(Request $request): RedirectResponse
+  {
+    $request['data'] =  $this->modifyTemplateContentLinks($request['data']);
+    return $this->traitUpdate();
+  }
+
+  private function modifyTemplateContentLinks($data)
+  {
+    return str_replace('src="', 'src="' . env('APP_URL'), $data);
   }
 
     /**
