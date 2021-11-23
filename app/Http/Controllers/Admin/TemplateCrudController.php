@@ -98,8 +98,8 @@ class TemplateCrudController extends CrudController
 
   public function store(Request $request): RedirectResponse
   {
-    $request['data'] =  str_replace('/uploads/',
-                                    env('APP_URL') . '/uploads/',
+    $request['data'] =  str_replace('src="',
+                                    'src="' . env('APP_URL'),
                                             $request['data']
     );
 
