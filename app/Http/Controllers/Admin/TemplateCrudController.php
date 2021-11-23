@@ -103,7 +103,6 @@ class TemplateCrudController extends CrudController
                                             $request['data']
     );
 
-    dd($request);
     return $this->traitStore();
   }
 
