@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\TemplateRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -15,7 +17,9 @@ use Illuminate\Support\Facades\Auth;
 class TemplateCrudController extends CrudController
 {
     use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+      store as traitStore;
+    }
     use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
     use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
@@ -91,6 +95,17 @@ class TemplateCrudController extends CrudController
          * - CRUD::addField(['name' => 'price', 'type' => 'number']));
          */
     }
+
+  public function store(Request $request): RedirectResponse
+  {
+    $request['data'] =  str_replace('/uploads/',
+                                    env('APP_URL') . '/uploads/',
+                                            $request['data']
+    );
+
+    dd($request);
+    return $this->traitStore();
+  }
 
     /**
      * Define what happens when the Update operation is loaded.
