@@ -17,7 +17,7 @@ use Throwable;
 class EmailProcessController extends Controller
 {
     protected $isParsedTemplate = false;
-    protected $shortcuts = ["{{sender_name}}", "{{recipient_name}}", "{{sender_email}}", "{{recipient_email}}"];
+    protected $shortcuts = ["{{sender_name}}", "{{sender_full_name}}", "{{recipient_name}}", "{{recipient_full_name}}", "{{sender_email}}", "{{recipient_email}}"];
 
     public function parse($template, $sender, $recipient)
     {
@@ -29,7 +29,7 @@ class EmailProcessController extends Controller
 
         return str_replace(
             $this->shortcuts,
-            [$sender->full_name, $recipient->full_name, $sender->email, $recipient->email],
+            [$sender->name,$sender->full_name, $recipient->name, $recipient->full_name, $sender->email, $recipient->email],
             $template);
     }
 
