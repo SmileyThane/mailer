@@ -7,18 +7,28 @@ use App\Models\CampaignItem;
 use App\Models\Contact;
 use App\Models\ContactCampaignItem;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
-use mysql_xdevapi\Exception;
+use RuntimeException;
+use Throwable;
 
 class EmailProcessController extends Controller
 {
+    protected $isParsedTemplate = false;
+    protected $shortcuts = ["{{sender_name}}", "{{recipient_name}}", "{{sender_email}}", "{{recipient_email}}"];
 
     public function parse($template, $sender, $recipient)
     {
+        foreach ($this->shortcuts as $shortcut) {
+            if (strpos($shortcut, $template) !== false) {
+                $this->isParsedTemplate = true;
+            }
+        }
+
         return str_replace(
-            ["{{sender_name}}", "{{recipient_name}}", "{{sender_email}}", "{{recipient_email}}"],
+            $this->shortcuts,
             [$sender->full_name, $recipient->full_name, $sender->email, $recipient->email],
             $template);
     }
@@ -28,7 +38,7 @@ class EmailProcessController extends Controller
         $campaignItems = CampaignItem::query()->where([
             ['processed_at', '<', now()],
             ['status', '!=', 2],
-            ['status', '!=', 4]
+            ['status', '!=', 4],
         ])->get();
 
         $campaignIds = $this->handleCampaignItems($campaignItems);
@@ -44,20 +54,34 @@ class EmailProcessController extends Controller
             $campaignItem->status = 2;
             $campaignItem->campaign->status = 2;
             $recipientsArray = [];
-
             if ($campaignItem->campaign->contacts) {
                 $contactArray = $campaignItem->campaign->contacts->pluck('contact');
                 foreach ($contactArray as $contactItem) {
                     try {
-                        $recipientsArray[] = ['email' => $contactItem->email, 'name' => $contactItem->name];
+                        $campaignItem->template->data = $this->parse($campaignItem->template->data, $campaignItem->user, $contactItem);
                         $campaignIds[] = $campaignItem->campaign_id;
 
-                        ContactCampaignItem::query()->create([
-                            'campaign_item_id' => $campaignItem->id,
-                            'contact_id' => $contactItem->id,
-
-                        ]);
-                    } catch (\Throwable $throwable) {
+                        if ($this->isParsedTemplate === true) {
+                            ContactCampaignItem::query()->create([
+                                'campaign_item_id' => $campaignItem->id,
+                                'contact_id' => $contactItem->id,
+                            ]);
+                            $externalToken = $this->sendGridTransfer(
+                                $campaignItem->user,
+                                ['email' => $contactItem->email, 'name' => $contactItem->name],
+                                $campaignItem->template->subject ?? $campaignItem->template->name,
+                                $campaignItem->template->data
+                            );
+                            $campaignItem->external_service_id = $externalToken;
+                            $campaignItem->save();
+                        } else {
+                            $recipientsArray[] = ['email' => $contactItem->email, 'name' => $contactItem->name];
+                            ContactCampaignItem::query()->create([
+                                'campaign_item_id' => $campaignItem->id,
+                                'contact_id' => $contactItem->id,
+                            ]);
+                        }
+                    } catch (Throwable $throwable) {
                         $campaignItem->status = 4;
                         $campaignItem->campaign->status = 4;
                         Log::error($throwable->getMessage());
@@ -80,6 +104,46 @@ class EmailProcessController extends Controller
         return $campaignIds;
     }
 
+    private function sendGridTransfer($from, $to, $subject, $body)
+    {
+        $guzzleClient = new Client([
+            'base_uri' => env('SG_URL'),
+        ]);
+
+        $result = $guzzleClient->request('POST', 'mail/send', [
+            RequestOptions::HEADERS => [
+                'Authorization' => 'Bearer ' . env('SG_TOKEN'),
+            ],
+            RequestOptions::JSON => [
+                "personalizations" => [
+                    [
+                        "to" => $to,
+                        "subject" => $subject,
+                    ],
+                ],
+                "content" => [
+                    [
+                        "type" => "text/html",
+                        "value" => $body,
+                    ],
+                ],
+                "from" => [
+                    "email" => $from->sender_email ?? $from->email,
+                    "name" => $from->sender_name ?? $from->name,
+                ],
+                "reply_to" => [
+                    "email" => $from->email,
+                    "name" => $from->full_name,
+                ],
+            ],
+        ]);
+        if ($result->getHeader('X-Message-Id')) {
+            return $result->getHeader('X-Message-Id')[0];
+        }
+
+        throw new RuntimeException('Sending error');
+    }
+
     private function updateCampaignStatus($campaigns)
     {
         foreach ($campaigns as $campaign) {
@@ -89,47 +153,6 @@ class EmailProcessController extends Controller
                 $campaign->save();
             }
         }
-    }
-
-    private function sendGridTransfer($from, $to, $subject, $body)
-    {
-        $guzzleClient = new Client([
-            'base_uri' => env('SG_URL'),
-        ]);
-
-        $result = $guzzleClient->request('POST', 'mail/send', [
-            RequestOptions::HEADERS => [
-                'Authorization' => 'Bearer ' . env('SG_TOKEN')
-            ],
-            RequestOptions::JSON => [
-                "personalizations" => [
-                    [
-                        "to" => $to,
-                        "subject" => $subject
-                    ]
-                ],
-                "content" => [
-                    [
-                        "type" => "text/html",
-                        "value" => $body
-                    ]
-                ],
-                "from" => [
-                    "email" => $from->sender_email ?? $from->email,
-                    "name" => $from->sender_name ?? $from->name
-                ],
-                "reply_to" => [
-                    "email" => $from->email,
-                    "name" => $from->full_name
-                ]
-            ],
-        ]);
-        if ($result->getHeader('X-Message-Id')) {
-            return $result->getHeader('X-Message-Id')[0];
-        } else {
-            throw new Exception('Sending error');
-        }
-
     }
 
     public function checkSendGridTransferStatus()
@@ -153,8 +176,8 @@ class EmailProcessController extends Controller
             'messages?limit=10000&query=msg_id+LIKE+"' . $campaignItem->external_service_id . '%"',
             [
                 RequestOptions::HEADERS => [
-                    'Authorization' => 'Bearer ' . env('SG_TOKEN')
-                ]
+                    'Authorization' => 'Bearer ' . env('SG_TOKEN'),
+                ],
             ]);
         try {
             $messages = json_decode($result->getBody()->getContents())->messages;
@@ -175,10 +198,9 @@ class EmailProcessController extends Controller
                 }
                 $campaignItem->save();
             }
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             Log::error($throwable);
         }
     }
-
 
 }
