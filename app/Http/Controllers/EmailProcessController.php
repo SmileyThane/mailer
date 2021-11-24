@@ -7,7 +7,6 @@ use App\Models\CampaignItem;
 use App\Models\Contact;
 use App\Models\ContactCampaignItem;
 use Carbon\Carbon;
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
 use Illuminate\Support\Facades\Log;
@@ -18,20 +17,6 @@ class EmailProcessController extends Controller
 {
     protected $isParsedTemplate = false;
     protected $shortcuts = ["{{sender_name}}", "{{sender_full_name}}", "{{recipient_name}}", "{{recipient_full_name}}", "{{sender_email}}", "{{recipient_email}}"];
-
-    public function parse($template, $sender, $recipient)
-    {
-        foreach ($this->shortcuts as $shortcut) {
-            if (strpos($shortcut, $template) !== false) {
-                $this->isParsedTemplate = true;
-            }
-        }
-
-        return str_replace(
-            $this->shortcuts,
-            [$sender->name,$sender->full_name, $recipient->name, $recipient->full_name, $sender->email, $recipient->email],
-            $template);
-    }
 
     public function process()
     {
@@ -102,6 +87,20 @@ class EmailProcessController extends Controller
             $campaignItem->save();
         }
         return $campaignIds;
+    }
+
+    public function parse($template, $sender, $recipient)
+    {
+        foreach ($this->shortcuts as $shortcut) {
+            if (strpos($shortcut, $template) !== false) {
+                $this->isParsedTemplate = true;
+            }
+        }
+
+        return str_replace(
+            $this->shortcuts,
+            [$sender->name, $sender->full_name, $recipient->name, $recipient->full_name, $sender->email, $recipient->email],
+            $template);
     }
 
     private function sendGridTransfer($from, $to, $subject, $body)
