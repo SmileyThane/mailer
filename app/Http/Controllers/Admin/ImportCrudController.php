@@ -6,26 +6,31 @@ use App\Http\Requests\ImportRequest;
 use App\Models\Company;
 use App\Models\Contact;
 use App\Models\ContactGroup;
+use App\Models\Import;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Rap2hpoutre\FastExcel\FastExcel;
 
 /**
  * Class ImportCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class ImportCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+    use ListOperation;
+    use CreateOperation {
         store as traitStore;
     }
+
 //    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
 //    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -34,7 +39,7 @@ class ImportCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Import::class);
+        CRUD::setModel(Import::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/import');
         CRUD::setEntityNameStrings('import', 'imports');
     }
