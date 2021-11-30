@@ -7,26 +7,30 @@ use App\Models\Campaign;
 use App\Models\CampaignContact;
 use App\Models\Contact;
 use App\Models\ContactGroup;
-use App\Models\User;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Class CampaignCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class CampaignCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
+    use ListOperation;
+    use CreateOperation {
         store as traitStore;
     }
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -35,7 +39,7 @@ class CampaignCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Campaign::class);
+        CRUD::setModel(Campaign::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/campaign');
         CRUD::setEntityNameStrings('campaign', 'campaigns');
     }
@@ -73,19 +77,19 @@ class CampaignCrudController extends CrudController
         CRUD::column('finished_at');
         CRUD::addColumn(
             [
-                'name'  => 'campaign_items',
+                'name' => 'campaign_items',
                 'label' => 'Campaign Sequence', // Table column heading
-                'type'  => 'model_function',
+                'type' => 'model_function',
                 'function_name' => 'linksToCampaignItems', // the method in your Model
             ],
         );
         CRUD::addColumn(
             [
-                'name'  => 'contacts',
+                'name' => 'contacts',
                 'label' => 'Contacts', // Table column heading
-                'type'  => 'model_function',
+                'type' => 'model_function',
                 'function_name' => 'linksToContacts', // the method in your Model
-                 'limit' => -1,
+                'limit' => -1,
             ],
         );
     }
