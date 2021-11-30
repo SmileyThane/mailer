@@ -3,21 +3,28 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ContactGroupRequest;
+use App\Models\ContactGroup;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 /**
  * Class ContactGroupCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class ContactGroupCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -26,7 +33,7 @@ class ContactGroupCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\ContactGroup::class);
+        CRUD::setModel(ContactGroup::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/contact-group');
         CRUD::setEntityNameStrings('contact group', 'contact groups');
     }
@@ -59,8 +66,8 @@ class ContactGroupCrudController extends CrudController
         CRUD::setValidation(ContactGroupRequest::class);
         CRUD::field('name');
         CRUD::addField([
-            'name'  => 'user_id',
-            'type'  => 'hidden',
+            'name' => 'user_id',
+            'type' => 'hidden',
             'value' => backpack_user()->id,
         ]);
 

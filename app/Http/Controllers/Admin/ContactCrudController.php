@@ -4,24 +4,29 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\ContactRequest;
 use App\Models\Company;
+use App\Models\Contact;
 use App\Models\ContactGroup;
-use App\Models\Template;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Class ContactCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class ContactCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use ListOperation;
+    use CreateOperation;
+    use UpdateOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -30,7 +35,7 @@ class ContactCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Contact::class);
+        CRUD::setModel(Contact::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/contact');
         CRUD::setEntityNameStrings('contact', 'contacts');
     }
@@ -87,24 +92,24 @@ class ContactCrudController extends CrudController
 
         CRUD::field('email');
         CRUD::addField([
-            'name'  => 'group_id',
+            'name' => 'group_id',
             'label' => "Group",
-            'type'  => 'select2_from_array',
+            'type' => 'select2_from_array',
             'options' => ContactGroup::query()->where('user_id', backpack_user()->id)->get()->pluck('name', 'id')->toArray()
 
         ]);
         CRUD::field('name');
         CRUD::field('lastname');
         CRUD::addField([
-            'name'  => 'company_id',
+            'name' => 'company_id',
             'label' => "Company",
-            'type'  => 'select2_from_array',
+            'type' => 'select2_from_array',
             'options' => Company::query()->get()->pluck('name', 'id')->toArray()
 
         ]);
         CRUD::addField([
-            'name'  => 'user_id',
-            'type'  => 'hidden',
+            'name' => 'user_id',
+            'type' => 'hidden',
             'value' => backpack_user()->id,
         ]);
 
