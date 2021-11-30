@@ -3,28 +3,34 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\TemplateRequest;
+use App\Models\Template;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
+use Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+use Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation;
+use Backpack\CRUD\app\Library\CrudPanel\CrudPanel;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 /**
  * Class TemplateCrudController
  * @package App\Http\Controllers\Admin
- * @property-read \Backpack\CRUD\app\Library\CrudPanel\CrudPanel $crud
+ * @property-read CrudPanel $crud
  */
 class TemplateCrudController extends CrudController
 {
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ListOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\CreateOperation {
-      store as traitStore;
+    use ListOperation;
+    use CreateOperation {
+        store as traitStore;
     }
-    use \Backpack\CRUD\app\Http\Controllers\Operations\UpdateOperation{
-      update as traitUpdate;
+    use UpdateOperation {
+        update as traitUpdate;
     }
-    use \Backpack\CRUD\app\Http\Controllers\Operations\DeleteOperation;
-    use \Backpack\CRUD\app\Http\Controllers\Operations\ShowOperation;
+    use DeleteOperation;
+    use ShowOperation;
 
     /**
      * Configure the CrudPanel object. Apply settings to all operations.
@@ -33,7 +39,7 @@ class TemplateCrudController extends CrudController
      */
     public function setup()
     {
-        CRUD::setModel(\App\Models\Template::class);
+        CRUD::setModel(Template::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/template');
         CRUD::setEntityNameStrings('Email Template', 'Email templates');
     }
@@ -82,12 +88,12 @@ class TemplateCrudController extends CrudController
         CRUD::field('name');
         CRUD::field('subject');
         CRUD::addField([
-            'name'  => 'data',
-            'type'  => 'tinymce',
+            'name' => 'data',
+            'type' => 'tinymce',
         ]);
         CRUD::addField([
-            'name'  => 'user_id',
-            'type'  => 'hidden',
+            'name' => 'user_id',
+            'type' => 'hidden',
             'value' => backpack_user()->id,
         ]);
 
@@ -98,22 +104,22 @@ class TemplateCrudController extends CrudController
          */
     }
 
-  public function store(Request $request): RedirectResponse
-  {
-    $request['data'] =  $this->modifyTemplateContentLinks($request['data']);
-    return $this->traitStore();
-  }
+    public function store(Request $request): RedirectResponse
+    {
+        $request['data'] = $this->modifyTemplateContentLinks($request['data']);
+        return $this->traitStore();
+    }
 
-  public function update(Request $request): RedirectResponse
-  {
-    $request['data'] =  $this->modifyTemplateContentLinks($request['data']);
-    return $this->traitUpdate();
-  }
+    public function update(Request $request): RedirectResponse
+    {
+        $request['data'] = $this->modifyTemplateContentLinks($request['data']);
+        return $this->traitUpdate();
+    }
 
-  private function modifyTemplateContentLinks($data)
-  {
-    return str_replace('src="', 'src="' . env('APP_URL'), $data);
-  }
+    private function modifyTemplateContentLinks($data)
+    {
+        return str_replace('src="', 'src="' . env('APP_URL'), $data);
+    }
 
     /**
      * Define what happens when the Update operation is loaded.
