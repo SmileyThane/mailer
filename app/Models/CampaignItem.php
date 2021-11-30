@@ -12,7 +12,7 @@ class CampaignItem extends Model
     use CrudTrait;
     use HasFactory;
 
-    const STATUSES = [ 1 => 'waiting', 2 => 'pushed', 3 => 'on hold', 4 => 'failed'];
+    const STATUSES = [1 => 'waiting', 2 => 'pushed', 3 => 'on hold', 4 => 'failed'];
 
     protected $fillable = ['campaign_id', 'user_id', 'template_id', 'processed_at', 'status_log'];
 
@@ -42,7 +42,7 @@ class CampaignItem extends Model
     public function getFullNameAttribute()
     {
         return
-            $this->template->name . " at ".
+            $this->template->name . " at " .
             Carbon::parse($this->processed_at)->format('d-m-Y') .
             " (" . self::STATUSES[$this->status] . ")";
     }
