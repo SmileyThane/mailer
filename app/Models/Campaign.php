@@ -2,20 +2,20 @@
 
 namespace App\Models;
 
+use Backpack\CRUD\app\Models\Traits\CrudTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use function Sodium\increment;
 
 class Campaign extends Model
 {
-    use \Backpack\CRUD\app\Models\Traits\CrudTrait;
+    use CrudTrait;
     use HasFactory;
 
     const CAMPAIGN_ITEM_ROUTE = 'campaign-item/';
     const CONTACT_ROUTE = 'contact/';
 
-    const STATUSES = [ 1 => 'pending', 2 => 'started', 3 => 'finished', 4 => 'failed'];
+    const STATUSES = [1 => 'pending', 2 => 'started', 3 => 'finished', 4 => 'failed'];
 
     protected $fillable = ['name', 'user_id', 'status', 'started_at', 'finished_at'];
 
@@ -25,7 +25,7 @@ class Campaign extends Model
 
     public function campaignItems()
     {
-        return $this->hasMany(CampaignItem::class, 'campaign_id', 'id' );
+        return $this->hasMany(CampaignItem::class, 'campaign_id', 'id');
     }
 
     public function linksToCampaignItems()
@@ -34,8 +34,8 @@ class Campaign extends Model
         $key = 1;
         foreach ($this->campaignItems as $campaignItem) {
 
-            $links .= '<a href="'.backpack_url(self::CAMPAIGN_ITEM_ROUTE . $campaignItem->id . '/show' ).'">'.
-                $key . ') ' . $campaignItem->processed_at.'</a><br/>';
+            $links .= '<a href="' . backpack_url(self::CAMPAIGN_ITEM_ROUTE . $campaignItem->id . '/show') . '">' .
+                $key . ') ' . $campaignItem->processed_at . '</a><br/>';
             $key++;
         }
         return $links;
@@ -47,8 +47,8 @@ class Campaign extends Model
         $key = 1;
         foreach ($this->contacts as $contact) {
 
-            $links .= '<a href="'.backpack_url(self::CONTACT_ROUTE . $contact->id . '/show' ).'">'.
-                $key . ') ' . $contact->contact->email.'</a><br/>';
+            $links .= '<a href="' . backpack_url(self::CONTACT_ROUTE . $contact->id . '/show') . '">' .
+                $key . ') ' . $contact->contact->email . '</a><br/>';
             $key++;
         }
         return $links;
@@ -56,7 +56,7 @@ class Campaign extends Model
 
     public function contacts(): HasMany
     {
-        return $this->hasMany(CampaignContact::class, 'campaign_id', 'id' );
+        return $this->hasMany(CampaignContact::class, 'campaign_id', 'id');
     }
 
     public function user()
