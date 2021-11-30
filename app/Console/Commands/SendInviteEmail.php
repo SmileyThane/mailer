@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
 use App\Mail\Invitation;
+use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 use IWasHereFirst2\LaravelMultiMail\Facades\MultiMail;
@@ -41,12 +41,12 @@ class SendInviteEmail extends Command
      */
     public function handle()
     {
-      $user = User::query()->firstOrCreate(
-        ['email' => $this->option('to')],
-        [
-          'name' => explode('@', $this->option('to'))[0],
-          'password' => Hash::make('qwerty1234')
-        ]);
-      return MultiMail::to($user)->from($this->option('from'))->send(new Invitation($user));
+        $user = User::query()->firstOrCreate(
+            ['email' => $this->option('to')],
+            [
+                'name' => explode('@', $this->option('to'))[0],
+                'password' => Hash::make('qwerty1234')
+            ]);
+        return MultiMail::to($user)->from($this->option('from'))->send(new Invitation($user));
     }
 }
