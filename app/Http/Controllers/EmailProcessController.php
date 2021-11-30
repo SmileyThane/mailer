@@ -46,7 +46,7 @@ class EmailProcessController extends Controller
                         $campaignItem->template->data = $this->parse($campaignItem->template->data, $campaignItem->user, $contactItem);
                         $campaignIds[] = $campaignItem->campaign_id;
 
-                        if ($this->isParsedTemplate === true) {
+                        if ($this->isParsedTemplate === true || count($contactArray) > 100) {
                             ContactCampaignItem::query()->create([
                                 'campaign_item_id' => $campaignItem->id,
                                 'contact_id' => $contactItem->id,
